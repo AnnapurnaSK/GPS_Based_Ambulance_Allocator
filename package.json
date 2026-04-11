@@ -1,0 +1,24 @@
+{
+  "name": "gps_based_ambulance_allocator",
+  "version": "1.0.0",
+  "description": "A system to allocate nearest ambulance using GPS data and optimization logic",
+  "homepage": "https://github.com/AnnapurnaSK/GPS_Based_Ambulance_Allocator#readme",
+  "bugs": {
+    "url": "https://github.com/AnnapurnaSK/GPS_Based_Ambulance_Allocator/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AnnapurnaSK/GPS_Based_Ambulance_Allocator.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.1",
+    "express": "^5.2.1"
+  }
+}
