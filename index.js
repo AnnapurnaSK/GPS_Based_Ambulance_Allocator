@@ -15,6 +15,7 @@ mongoose.connect(process.env.MONGO_URL)
     }); 
 })
 .catch((err)=>{
+    console.log(err);
     console.log('Unable to connect to the database');
 });
 
