@@ -2,7 +2,21 @@
 
 //System files
 const Driver=require('../models/drivers');
+const User=require('../models/users');
 
+//To get all users
+async function getAllUsers(req,res)
+{
+    try{
+        const result=await User.find({});
+        res.json(result);
+    }
+    catch(err){
+        res.status(500).json({error: "Unable to fetch users"});
+    }
+}
+
+//To get user by email
 //To update driver location and status
 async function updateDriverLocationAndStatus(req,res)
 {

@@ -10,7 +10,7 @@ router.post('/api/login',adminLogin);
 
 //Protected routes for admin operations
 router.use(admin_auth);
-
+router.get('/api/getAllUsers',admin_api.getAllUsers);   
 router.get('/api/getAllDrivers',admin_api.getAllDrivers);
 router.get('/api/getDriverByVehicleNumber/:vehicleNumber',admin_api.getDriverByVehicleNumber);
 router.post('/api/insertDriver',admin_api.insertDriver);
