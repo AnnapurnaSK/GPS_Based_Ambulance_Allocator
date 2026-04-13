@@ -5,3 +5,6 @@ commit link: https://github.com/AnnapurnaSK/GPS_Based_Ambulance_Allocator/commit
 
 2. Created api end points for admin to add, delete, see, search and update the status of all drivers and ambulances from the data base
 commit link: https://github.com/AnnapurnaSK/GPS_Based_Ambulance_Allocator/commit/7e8a752de76e87855556b097afd93418a0db4e41
+
+3. Added login api and jwt authentication to all admin api's and end points to keep it secure:
+commit link: https://github.com/AnnapurnaSK/GPS_Based_Ambulance_Allocator/commit/74c8ba19a0e8e5d6b11d1072dbcf5d26f11d7bf3
