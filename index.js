@@ -33,22 +33,51 @@ async function fetchNearbyHospitals(lat, lon, radius = 5000) {
 app.post("/allocate", async (req, res) => {
   const { name, phone, location } = req.body;
   
-  if (!location || !location.lat || !location.lng) {
-    return res.status(400).json({ error: "Invalid location data" });
+  // 1. Validate Name
+  if (!name || typeof name !== 'string' || name.trim().length < 3) {
+    return res.status(400).json({ error: "Invalid name. Minimum 3 characters required." });
+  }
+
+  // 2. Validate Indian Phone Number (10 digits starting with 6-9)
+  const phoneRegex = /^[6-9]\d{9}$/;
+  const cleanPhone = phone.replace(/\D/g, ''); // Remove non-digits for checking
+  if (!phoneRegex.test(cleanPhone)) {
+    return res.status(400).json({ error: "Invalid Indian mobile number. Must be 10 digits starting with 6-9." });
+  }
+
+  // 3. Validate Location
+  if (!location || typeof location.lat !== 'number' || typeof location.lng !== 'number') {
+    return res.status(400).json({ error: "Invalid location data." });
+  }
+
+  if (location.lat < -90 || location.lat > 90 || location.lng < -180 || location.lng > 180) {
+    return res.status(400).json({ error: "Coordinates out of valid earth range." });
   }
 
   console.log(`Request from ${name} (${phone}) at ${location.lat}, ${location.lng}`);
 
-  const hospitals = await fetchNearbyHospitals(location.lat, location.lng);
-  console.log(`Found ${hospitals.length} hospitals nearby.`);
+  let hospitals = [];
+  let currentRadius = 5000;
+  const radii = [5000, 10000, 25000, 50000];
+
+  for (const r of radii) {
+    console.log(`Searching for hospitals within ${r}m...`);
+    hospitals = await fetchNearbyHospitals(location.lat, location.lng, r);
+    if (hospitals.length > 0) {
+      currentRadius = r;
+      break;
+    }
+  }
   
   if (hospitals.length === 0) {
-    return res.status(404).json({ message: "No hospitals found nearby 🚑" });
+    return res.status(404).json({ error: "No hospitals found within 50km search radius. 🚑" });
   }
+
+  console.log(`Found ${hospitals.length} hospitals within ${currentRadius}m.`);
 
   // Limit to top 10 hospitals by straight-line distance to avoid API overload
   const topHospitals = hospitals.slice(0, 10);
-  console.log(`Calculating road routes for top ${topHospitals.length} hospitals...`);
+  console.log(`Calculating road routes for top ${topHospitals.length} units...`);
 
   // Parallelize the route calculations for better performance
   const routePromises = topHospitals.map(async (hospital) => {

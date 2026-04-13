@@ -142,24 +142,86 @@ button:disabled {
   100% { opacity: 1; }
 }
 
-.status-box {
-  padding: 15px;
-  border-radius: 12px;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
+.mode-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.status-box.success {
-  background: rgba(46, 204, 113, 0.1);
-  color: #27ae60;
-  border: 1px solid rgba(46, 204, 113, 0.2);
+.section-label {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin-bottom: -4px;
 }
 
-.status-box.error {
-  background: rgba(231, 76, 60, 0.1);
-  color: #c0392b;
-  border: 1px solid rgba(231, 76, 60, 0.2);
+.demo-section {
+  opacity: 0.9;
+}
+
+.real-time-section {
+  padding-top: 5px;
+}
+
+.location-btn.captured {
+  background: #27ae60;
+  border: 1px solid #2ecc71;
+}
+
+.location-btn.captured:hover {
+  background: #219150;
+}
+
+.divider {
+  border: 0;
+  height: 1px;
+  background: #eee;
+  margin: 10px 0;
+}
+
+.error {
+  border-color: #ff416c !important;
+  background: rgba(255, 65, 108, 0.05);
+}
+
+.error-text {
+  font-size: 11px;
+  color: #ff416c;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.error-text.centered {
+  text-align: center;
+  display: block;
+}
+
+.status-box.scanning {
+  background: rgba(52, 152, 219, 0.1);
+  color: var(--secondary);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.radar-ping {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  background: var(--secondary);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: ping 1.5s infinite;
+  opacity: 0.5;
+}
+
+@keyframes ping {
+  0% { width: 0; height: 0; opacity: 0.8; }
+  100% { width: 300px; height: 300px; opacity: 0; }
 }
 
 .ambulance-result-card {

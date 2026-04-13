@@ -51,17 +51,15 @@ async function navigate(lat1, lon1, lat2, lon2)
     
 }
 
-//To verif the lat and lon
-function validate(lat,lon)
-{
-    if(typeof lat!=='number' || typeof lon!=='number')
-        return false;
+// Function to verify if latitude and longitude are within valid Earth ranges
+function validate(lat, lon) {
+    if (typeof lat !== 'number' || typeof lon !== 'number') return false;
 
-    if(lat<-90 || lat>90)
-        return false;
+    // Latitude must be between -90 and 90 degrees
+    if (lat < -90 || lat > 90) return false;
 
-    if(lon<-180 || lon>180)
-        return false;
+    // Longitude must be between -180 and 180 degrees
+    if (lon < -180 || lon > 180) return false;
 
     return true;
 }

@@ -34,7 +34,27 @@ function App() {
   const [location, setLocation] = useState(null);
   const [ambulance, setAmbulance] = useState(null);
   const [status, setStatus] = useState("");
+  const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
+
+  const handleDemo = () => {
+    setName("Maanvi Sharma");
+    setPhone("9876543210");
+    setLocation({ lat: 12.9305, lng: 77.6054 }); // Koramangala, Bengaluru
+    setStatus("✅ Demo data loaded! Localized to Bengaluru 🇮🇳");
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    const phoneRegex = /^[6-9]\d{9}$/;
+
+    if (name.trim().length < 3) newErrors.name = "Name must be at least 3 characters.";
+    if (!phoneRegex.test(phone.replace(/\D/g, ''))) newErrors.phone = "Enter a valid 10-digit Indian number.";
+    if (!location) newErrors.location = "Please capture your location first.";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const getLocation = () => {
     setStatus("📍 Detecting your coordinates...");
@@ -45,22 +65,19 @@ function App() {
           lng: pos.coords.longitude,
         };
         setLocation(coords);
+        setErrors(prev => ({ ...prev, location: null }));
         setStatus("✅ Location captured.");
       },
       (err) => {
         console.error(err);
-        setStatus("❌ Location permission denied. Using default (London).");
-        // Fallback to a default location for demo if needed
-        setLocation({ lat: 51.505, lng: -0.09 });
+        setStatus("❌ Location permission denied. Using fallback (Bengaluru).");
+        setLocation({ lat: 12.9716, lng: 77.5946 });
       }
     );
   };
 
   const requestAmbulance = async () => {
-    if (!name || !phone || !location) {
-      alert("Please fill in all details and capture your location first! 🚨");
-      return;
-    }
+    if (!validateForm()) return;
 
     setLoading(true);
     setStatus("🚑 Searching for the nearest ambulance...");
@@ -78,7 +95,7 @@ function App() {
         setAmbulance(data.ambulance);
         setStatus(`✅ ${data.message} (${data.ambulance.distance} km away, ~${data.ambulance.duration} mins)`);
       } else {
-        setStatus(`❌ ${data.message || "Could not find an ambulance."}`);
+        setStatus(`❌ ${data.error || data.message || "Allocation failed."}`);
       }
     } catch (error) {
       console.error(error);
@@ -88,8 +105,8 @@ function App() {
     }
   };
 
-  const mapCenter = location ? [location.lat, location.lng] : [20, 0];
-  const zoom = location ? 13 : 2;
+  const mapCenter = location ? [location.lat, location.lng] : [20, 77]; // Centered on India
+  const zoom = location ? 14 : 5;
 
   return (
     <div className="app-wrapper">
@@ -97,43 +114,68 @@ function App() {
         <div className="card">
           <div className="branding">
             <h1>🚑 Emergency</h1>
-            <p className="subtitle">Ambulance Allocator v1.0</p>
+            <p className="subtitle">Global Ambulance Allocator</p>
           </div>
 
-          <div className="input-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              placeholder="e.g. John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+          <div className="mode-section demo-section">
+            <span className="section-label">Simulation / Testing</span>
+            <button className="demo-btn" onClick={handleDemo}>
+              🧪 Test with Demo Data
+            </button>
           </div>
 
-          <div className="input-group">
-            <label>Phone Number</label>
-            <input
-              type="text"
-              placeholder="+1 234 567 890"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-            />
+          <hr className="divider" />
+
+          <div className="mode-section real-time-section">
+            <span className="section-label">Real-time Emergency Request</span>
+            
+            <div className="input-group">
+              <label>Full Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Maanvi Sharma"
+                className={errors.name ? 'error' : ''}
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value);
+                  if (errors.name) setErrors(prev => ({ ...prev, name: null }));
+                }}
+              />
+              {errors.name && <span className="error-text">{errors.name}</span>}
+            </div>
+
+            <div className="input-group">
+              <label>Phone Number (India)</label>
+              <input
+                type="text"
+                placeholder="+91 9876543210"
+                className={errors.phone ? 'error' : ''}
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  if (errors.phone) setErrors(prev => ({ ...prev, phone: null }));
+                }}
+              />
+              {errors.phone && <span className="error-text">{errors.phone}</span>}
+            </div>
+
+            <button className={`location-btn ${location ? 'captured' : ''} ${errors.location ? 'error' : ''}`} onClick={getLocation} disabled={loading}>
+              {location ? "📍 Current Location Captured" : "📍 Detect My Current Location"}
+            </button>
+            {errors.location && <span className="error-text centered">{errors.location}</span>}
+
+            <button 
+              className={`main-btn ${loading ? 'loading' : ''}`} 
+              onClick={requestAmbulance} 
+              disabled={loading}
+            >
+              {loading ? "📡 Scanning for Unit..." : "🚑 Request Nearest Ambulance"}
+            </button>
           </div>
-
-          <button className="location-btn" onClick={getLocation} disabled={loading}>
-            {location ? "📍 Location Captured" : "📍 Get My Location"}
-          </button>
-
-          <button 
-            className={`main-btn ${loading ? 'loading' : ''}`} 
-            onClick={requestAmbulance} 
-            disabled={loading || !location}
-          >
-            {loading ? "Allocating..." : "🚑 Request Ambulance"}
-          </button>
 
           {status && (
-            <div className={`status-box ${status.startsWith('❌') ? 'error' : 'success'}`}>
+            <div className={`status-box ${status.includes('⏳') || status.includes('📡') ? 'scanning' : ''} ${status.startsWith('❌') ? 'error' : 'success'}`}>
+              {status.includes('Searching') && <div className="radar-ping"></div>}
               <p>{status}</p>
             </div>
           )}
