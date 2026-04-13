@@ -14,22 +14,31 @@ async function navigate(lat1, lon1, lat2, lon2)
         {
             //Open source routing machine API
             const url=`https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
-            const result=await fetch(url);
-            const data=await result.json();
-            if(data.code!=="Ok")
-            {
-                return {
-                    status: false
+            
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            try {
+                const result = await fetch(url, { signal: controller.signal });
+                const data = await result.json();
+                clearTimeout(timeout);
+
+                if(data.code!=="Ok")
+                {
+                    return { status: false }
                 }
-            }
-            else
-            {
-                const r=data.routes[0];
-                return {
-                    status: true,
-                    distance: (r.distance/1000),
-                    duration: (r.duration/3600)
+                else
+                {
+                    const r=data.routes[0];
+                    return {
+                        status: true,
+                        distance: (r.distance/1000),
+                        duration: (r.duration/3600)
+                    }
                 }
+            } catch (fetchErr) {
+                console.error(`OSRM Fetch Error: ${fetchErr.message}`);
+                return { status: false };
             }
         }              
     }
@@ -57,9 +66,5 @@ function validate(lat,lon)
     return true;
 }
 
-
-//Testing
-navigate(14.47744, 75.90188, 14.4774391, 75.9018759)
-    .then(res => console.log(res))
-    .catch(err => console.error(err));
+module.exports = { navigate };
 //{ status: true, distance: 0.0004, duration: 0.00002777777777777778 } 
