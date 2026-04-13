@@ -1,7 +1,6 @@
 const jwt=require('jsonwebtoken');
 require('dotenv').config();
 
-const jwt = require('jsonwebtoken');
 
 const adminLogin = async (req, res) => {
     try {

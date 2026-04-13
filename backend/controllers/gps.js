@@ -179,3 +179,7 @@ async function search(lat, lon) {
         throw new Error("Unable to search for drivers");
     }
 }
+
+module.exports={
+    search
+};
