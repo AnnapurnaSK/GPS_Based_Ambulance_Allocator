@@ -19,7 +19,7 @@ const AdminLogin = () => {
       const response = await fetch("http://127.0.0.1:5000/admin/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ username: email, password }),
       });
 
       const data = await response.json();
@@ -46,10 +46,10 @@ const AdminLogin = () => {
         
         <form onSubmit={handleLogin} className="login-form">
           <div className="input-group">
-            <label>Email Address</label>
+            <label>Username</label>
             <input
-              type="email"
-              placeholder="admin@ambulance.com"
+              type="text"
+              placeholder="admin"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

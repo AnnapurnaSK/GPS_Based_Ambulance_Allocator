@@ -4,6 +4,7 @@
   "description": "A system to allocate nearest ambulance using GPS data and optimization logic",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import StatsCard from "./components/StatsCard";
 import "./App.css";
 
 const AdminDashboard = () => {
@@ -9,7 +10,6 @@ const AdminDashboard = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingAmbulance, setEditingAmbulance] = useState(null);
   
-  // Form State
   const [formData, setFormData] = useState({
     vehicleNumber: "",
     name: "",
@@ -39,10 +39,10 @@ const AdminDashboard = () => {
       if (response.ok) {
         setAmbulances(data);
       } else {
-        setError("Failed to fetch ambulances.");
+        setError("Failed to access secure fleet data.");
       }
     } catch (err) {
-      setError("Server connection failed.");
+      setError("Secure link to Command Center lost.");
     } finally {
       setLoading(false);
     }
@@ -88,15 +88,15 @@ const AdminDashboard = () => {
         fetchAmbulances();
         setShowModal(false);
       } else {
-        alert("Operation failed. Check if vehicle number is unique.");
+        alert("Operation failed. Resource conflict detected.");
       }
     } catch (err) {
-      alert("Error connecting to server.");
+      alert("Error transmitting data to satellite.");
     }
   };
 
   const handleDelete = async (vehicleNumber) => {
-    if (!window.confirm("Are you sure you want to remove this ambulance?")) return;
+    if (!window.confirm("CONFIRM: Permanently decommission this unit?")) return;
 
     try {
       const response = await fetch(`http://127.0.0.1:5000/admin/api/deleteDriver/${vehicleNumber}`, {
@@ -107,10 +107,10 @@ const AdminDashboard = () => {
       if (response.ok) {
         fetchAmbulances();
       } else {
-        alert("Failed to delete.");
+        alert("Authorization required for deletion.");
       }
     } catch (err) {
-      alert("Error connecting to server.");
+      alert("Relay error during decommission.");
     }
   };
 
@@ -119,50 +119,134 @@ const AdminDashboard = () => {
     navigate("/login");
   };
 
+  const stats = {
+    total: ambulances.length,
+    active: ambulances.filter(a => a.status === "busy").length,
+    available: ambulances.filter(a => a.status === "available").length,
+  };
+
   return (
     <div className="dashboard-container">
-      <nav className="dashboard-nav glass-card">
-        <h1>🚔 Ambulance Dispatch Command</h1>
+      {/* Premium Navbar */}
+      <nav className="dashboard-nav glass-effect">
+        <div className="nav-brand">
+          <span className="brand-icon">⚡</span>
+          <div className="brand-text">
+            <h1>Command Center</h1>
+            <span className="brand-status">Fleet Online // Secure Channel</span>
+          </div>
+        </div>
         <div className="nav-actions">
-          <button className="add-btn" onClick={() => handleOpenModal()}>+ Add New Unit</button>
-          <button className="logout-btn" onClick={handleLogout}>Logout</button>
+          <button className="add-btn neon-btn" onClick={() => handleOpenModal()}>
+            + Deploy New Unit
+          </button>
+          <button className="logout-btn transparent-btn" onClick={handleLogout}>
+            Logout Session
+          </button>
         </div>
       </nav>
 
-      {error && <div className="error-banner">{error}</div>}
+      {/* Stats Header */}
+      <div className="stats-container">
+        <StatsCard 
+          title="Total Fleet" 
+          value={stats.total} 
+          icon="🚔" 
+          trend="+2" 
+          color="#00d2ff" 
+        />
+        <StatsCard 
+          title="Active Missions" 
+          value={stats.active} 
+          icon="🚨" 
+          trend={stats.active > 0 ? "+1" : "0"} 
+          color="#ff416c" 
+        />
+        <StatsCard 
+          title="Available Units" 
+          value={stats.available} 
+          icon="✅" 
+          trend="-1" 
+          color="#27ae60" 
+        />
+      </div>
 
+      {error && <div className="error-banner glass-effect">{error}</div>}
+
+      {/* Fleet Grid */}
       <div className="ambulance-grid">
         {loading ? (
-          <div className="loading-state">Scanning Fleet...</div>
+          <div className="loading-state">
+            <div className="scanner-line"></div>
+            <span>Syncing with Global Relay...</span>
+          </div>
         ) : ambulances.length === 0 ? (
-          <div className="empty-state">No ambulances registered in the system.</div>
+          <div className="empty-state glass-effect">
+            <p>No active units detected on current sector.</p>
+            <button className="add-btn" onClick={() => handleOpenModal()}>Initialize First Unit</button>
+          </div>
         ) : (
           ambulances.map((amb) => (
-            <div key={amb.vehicleNumber} className="glass-card ambulance-card">
-              <div className={`status-badge ${amb.status}`}>{amb.status}</div>
-              <h3>{amb.vehicleNumber}</h3>
-              <p><strong>Driver:</strong> {amb.name}</p>
-              <p><strong>Contact:</strong> {amb.contact}</p>
-              <p><strong>Email:</strong> {amb.email}</p>
-              <div className="card-actions">
-                <button className="edit-icon-btn" onClick={() => handleOpenModal(amb)}>✏️ Edit</button>
-                <button className="delete-icon-btn" onClick={() => handleDelete(amb.vehicleNumber)}>🗑️ Remove</button>
+            <div key={amb.vehicleNumber} className="glass-card ambulance-card interactive-card">
+              <div className={`status-pill ${amb.status}`}>
+                <span className="status-dot"></span>
+                {amb.status.toUpperCase()}
+              </div>
+              
+              <div className="card-header">
+                <div className="vehicle-id">
+                  <span className="label">UNIT ID</span>
+                  <h3>{amb.vehicleNumber}</h3>
+                </div>
+                <div className="driver-avatar">
+                   {amb.name.charAt(0)}
+                </div>
+              </div>
+
+              <div className="info-block">
+                <div className="info-item">
+                  <span className="label">OPERATOR</span>
+                  <span className="value">{amb.name}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">CONTACT</span>
+                  <span className="value">{amb.contact}</span>
+                </div>
+                <div className="info-item">
+                  <span className="label">COMMS</span>
+                  <span className="value muted">{amb.email}</span>
+                </div>
+              </div>
+
+              <div className="card-footer-actions">
+                <button className="btn-icon edit" onClick={() => handleOpenModal(amb)}>
+                  <span>✏️</span> Reconfigure
+                </button>
+                <button className="btn-icon delete" onClick={() => handleDelete(amb.vehicleNumber)}>
+                  <span>🗑️</span> Purge
+                </button>
               </div>
             </div>
           ))
         )}
       </div>
 
+      {/* Premium Modal */}
       {showModal && (
-        <div className="modal-overlay">
-          <div className="glass-card modal-content">
-            <h2>{editingAmbulance ? "Edit Ambulance" : "Add New Ambulance"}</h2>
-            <form onSubmit={handleSubmit}>
-              <div className="form-row">
+        <div className="modal-overlay blur-bg">
+          <div className="glass-card modal-content slide-up">
+            <div className="modal-header">
+              <h2>{editingAmbulance ? "Unit Reconfiguration" : "New Unit Deployment"}</h2>
+              <p>Enter data for encrypted sector database.</p>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="premium-form">
+              <div className="form-grid">
                 <div className="input-group">
-                  <label>Vehicle Number</label>
+                  <label>Vehicle ID</label>
                   <input 
                     type="text" 
+                    placeholder="e.g. KA-01-AB-1234"
                     value={formData.vehicleNumber} 
                     onChange={(e) => setFormData({...formData, vehicleNumber: e.target.value})} 
                     disabled={!!editingAmbulance}
@@ -170,9 +254,10 @@ const AdminDashboard = () => {
                   />
                 </div>
                 <div className="input-group">
-                  <label>Driver Name</label>
+                  <label>Operator Name</label>
                   <input 
                     type="text" 
+                    placeholder="Full Name"
                     value={formData.name} 
                     onChange={(e) => setFormData({...formData, name: e.target.value})} 
                     required 
@@ -180,20 +265,22 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className="form-row">
+              <div className="form-grid">
                 <div className="input-group">
-                  <label>Contact Number</label>
+                  <label>Comms Frequency (Contact)</label>
                   <input 
                     type="text" 
+                    placeholder="10-digit primary"
                     value={formData.contact} 
                     onChange={(e) => setFormData({...formData, contact: e.target.value})} 
                     required 
                   />
                 </div>
                 <div className="input-group">
-                  <label>Driver Email</label>
+                  <label>Secure Email</label>
                   <input 
                     type="email" 
+                    placeholder="driver@emergency.com"
                     value={formData.email} 
                     onChange={(e) => setFormData({...formData, email: e.target.value})} 
                     required 
@@ -202,9 +289,10 @@ const AdminDashboard = () => {
               </div>
 
               <div className="input-group">
-                <label>Address / Base Station</label>
+                <label>Base Station Sector</label>
                 <input 
                   type="text" 
+                  placeholder="Street, City, Sector"
                   value={formData.address} 
                   onChange={(e) => setFormData({...formData, address: e.target.value})} 
                   required 
@@ -212,10 +300,12 @@ const AdminDashboard = () => {
               </div>
 
               <div className="modal-actions">
-                <button type="submit" className="save-btn">
-                  {editingAmbulance ? "Save Changes" : "Register Ambulance"}
+                <button type="submit" className="save-btn neon-fill">
+                  {editingAmbulance ? "Proceed with Sync" : "Deploy Logic"}
                 </button>
-                <button type="button" className="cancel-btn" onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="button" className="cancel-btn transparent-btn" onClick={() => setShowModal(false)}>
+                  Abort
+                </button>
               </div>
             </form>
           </div>
