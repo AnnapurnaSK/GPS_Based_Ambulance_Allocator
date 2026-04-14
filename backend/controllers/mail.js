@@ -6,87 +6,96 @@ const Driver=require('../models/drivers');
 
 const baseURL = "http://127.0.0.1:3000"; // Change to your frontend URL
 
-async function allocateandSendMail(lat, lon, patient) {
+// Generic function to send emails to both patient and driver
+async function sendNotification(patient, driver, distance, duration) {
     try {
-        const res = await search(lat, lon);
-
-        if (!res) {
-            return { status: false };
-        }
-
         const token = jwt.sign(
-        {
-            vehicleNumber: res.vehicleNumber
-        },
-        process.env.JWT_SECRET, // move to env later
-        { expiresIn: "2h" }
+            { vehicleNumber: driver.vehicleNumber },
+            process.env.JWT_SECRET || "SECRET_KEY",
+            { expiresIn: "2h" }
         );
 
-    const closeLink = `${baseURL}/user/api/close?token=${token}`;
+        const closeLink = `${baseURL}/user/api/close?token=${token}`;
+        const mapLink = `https://www.google.com/maps?q=${Number(patient.lat).toFixed(6)},${Number(patient.lon).toFixed(6)}`;
 
         const transporter = nodemailer.createTransport({
             service: 'gmail',
             auth: {
-                user: process.env.EMAIL, // Your email
+                user: process.env.EMAIL,
                 pass: process.env.PASSWORD
             }
         });
 
-        const mapLink = `https://www.google.com/maps?q=${Number(lat).toFixed(6)},${Number(lon).toFixed(6)}`;
-
         const userMail = {
-            from: 'YOUR_EMAIL@gmail.com',
+            from: process.env.EMAIL,
             to: patient.email,
-            subject: 'Ambulance Allocated',
+            subject: '🚑 Ambulance Allocated',
             text: `Hello ${patient.name},
 
-An ambulance has been allocated to you.
+An ambulance has been allocated to you from ${driver.hospital || "nearest facility"}.
 
 Driver Details:
-Name: ${res.name}
-Vehicle: ${res.vehicleNumber}
-Contact: ${res.contact}
+Name: ${driver.name}
+Vehicle: ${driver.vehicleNumber}
+Contact: ${driver.contact}
 
-Distance: ${res.distance} km
-ETA: ${res.duration} hours
+Distance: ${distance} km
+ETA: ${duration} minutes
 
-Click this link after you reach the destination: ${closeLink}
+Click this link after you reach the destination to release the unit: ${closeLink}
 
 Stay calm, help is on the way.`
         };
+
         const driverMail = {
-            from: 'YOUR_EMAIL@gmail.com',
-            to: res.email,
-            subject: 'Emergency Assigned',
+            from: process.env.EMAIL,
+            to: driver.email,
+            subject: '🚨 Emergency Assigned',
             text: `New Patient Assigned
 
 Patient Details:
 Name: ${patient.name}
 Contact: ${patient.contact}
 Email: ${patient.email}
- Location:
+
+Location:
 ${mapLink}
 
-Please navigate immediately.`
+Please navigate immediately using the link above.`
         };
 
-
-        // Send both emails
         await Promise.all([
             transporter.sendMail(userMail),
             transporter.sendMail(driverMail)
         ]);
 
-        await Driver.updateOne(
-            { vehicleNumber: res.vehicleNumber },
-            { status: "busy" }
+        return { status: true };
+    } catch (err) {
+        console.error("Email Sending Error:", err);
+        return { status: false, error: err.message };
+    }
+}
+
+async function allocateandSendMail(lat, lon, patient) {
+    try {
+        const res = await search(lat, lon);
+        if (!res) return { status: false };
+
+        const mailRes = await sendNotification(
+            { ...patient, lat, lon },
+            res,
+            res.distance.toFixed(2),
+            (res.duration * 60).toFixed(1)
         );
 
-        return {
-            status: true,
-            driver: res
-        };
+        if (mailRes.status) {
+            await Driver.updateOne(
+                { vehicleNumber: res.vehicleNumber },
+                { status: "busy" }
+            );
+        }
 
+        return { status: mailRes.status, driver: res };
     } catch (err) {
         console.error(err);
         return { status: false };

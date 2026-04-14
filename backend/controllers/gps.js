@@ -108,6 +108,41 @@ function validate(lat, lon) {
     return true;
 }
 
+async function search(lat, lon) {
+    try {
+        const drivers = await Driver.find({ status: "available" });
+        let bestDriver = null;
+
+        for (const driver of drivers) {
+            const res = await navigate(
+                lat,
+                lon,
+                driver.location.lat,
+                driver.location.lon
+            );
+
+            if (res.status) {
+                const current = {
+                    vehicleNumber: driver.vehicleNumber,
+                    name: driver.name,
+                    contact: driver.contact,
+                    email: driver.email,
+                    address: driver.address,
+                    distance: res.distance,
+                    duration: res.duration
+                };
+
+                if (!bestDriver || current.duration < bestDriver.duration) {
+                    bestDriver = current;
+                }
+            }
+        }
+        return bestDriver;
+    } catch (err) {
+        throw new Error("Unable to search for drivers");
+    }
+}
+
 module.exports = {
     navigate,
     search

@@ -98,17 +98,74 @@ app.post("/allocate", async (req, res) => {
   }
 
   if (nearest) {
-    res.json({
-      message: `Ambulance allocated from ${nearest.name} 🚑`,
-      ambulance: {
-        id: nearest.id,
-        hospital: nearest.name,
-        distance: nearest.distance.toFixed(2),
-        duration: (nearest.duration * 60).toFixed(1),
-        lat: nearest.lat,
-        lon: nearest.lon
+    // 3. Find an available driver from MongoDB to "assign" to this hospital allocation
+    const Driver = require("./backend/models/drivers");
+    const { sendNotification } = require("./backend/controllers/mail");
+
+    try {
+      const availableDriver = await Driver.findOne({ status: "available" });
+      
+      if (availableDriver) {
+        console.log(`Assigning Driver ${availableDriver.name} to this allocation.`);
+        
+        // Mark driver as busy
+        availableDriver.status = "busy";
+        await availableDriver.save();
+
+        // Send Emails (Patient + Driver)
+        // Note: For now we use a dummy email for the patient if none provided
+        const patientData = {
+          name,
+          phone,
+          email: req.body.email || "patient@example.com", // Fallback for testing
+          lat: location.lat,
+          lon: location.lng
+        };
+
+        const driverData = {
+          name: availableDriver.name,
+          email: availableDriver.email,
+          contact: availableDriver.contact,
+          vehicleNumber: availableDriver.vehicleNumber,
+          hospital: nearest.name
+        };
+
+        await sendNotification(
+          patientData,
+          driverData,
+          nearest.distance.toFixed(2),
+          (nearest.duration * 60).toFixed(1)
+        );
       }
-    });
+
+      res.json({
+        message: `Ambulance allocated from ${nearest.name} 🚑`,
+        ambulance: {
+          id: nearest.id,
+          hospital: nearest.name,
+          distance: nearest.distance.toFixed(2),
+          duration: (nearest.duration * 60).toFixed(1),
+          lat: nearest.lat,
+          lon: nearest.lon,
+          driver: availableDriver ? {
+            name: availableDriver.name,
+            contact: availableDriver.contact,
+            vehicle: availableDriver.vehicleNumber
+          } : null
+        }
+      });
+    } catch (dbErr) {
+      console.error("Database/Mail Error:", dbErr);
+      // Still return the hospital result even if mail fails
+      res.json({
+        message: `Ambulance allocated from ${nearest.name} 🚑 (Mail/DB sync failed)`,
+        ambulance: {
+          hospital: nearest.name,
+          distance: nearest.distance.toFixed(2),
+          duration: (nearest.duration * 60).toFixed(1)
+        }
+      });
+    }
   } else {
     res.status(500).json({ message: "Could not calculate route to any nearest hospital" });
   }

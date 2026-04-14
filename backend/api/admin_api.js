@@ -17,23 +17,29 @@ async function getAllUsers(req,res)
 }
 
 //To get user by email
-//To update driver location and status
-async function updateDriverLocationAndStatus(req,res)
-{
-    const vehicleNumber=req.params.vehicleNumber;
-    const {lat,lon,status}=req.body;
-    try{
-        const driver=await Driver.findOne({vehicleNumber: vehicleNumber});
-        if(!driver){
-            return res.status(404).json({error: "Driver not found"});
+// To update driver details fully (General CRUD)
+async function updateDriver(req, res) {
+    const vehicleNumber = req.params.vehicleNumber;
+    const { name, contact, email, address, status, location } = req.body;
+    try {
+        const driver = await Driver.findOne({ vehicleNumber: vehicleNumber });
+        if (!driver) {
+            return res.status(404).json({ error: "Ambulance/Driver not found" });
         }
-        driver.location={lat,lon};
-        driver.status=status;
-        const result=await driver.save();
-        res.json(result);
+
+        // Update fields if provided
+        if (name) driver.name = name;
+        if (contact) driver.contact = contact;
+        if (email) driver.email = email;
+        if (address) driver.address = address;
+        if (status) driver.status = status;
+        if (location) driver.location = location;
+
+        const result = await driver.save();
+        res.json({ message: "Ambulance details updated successfully", data: result });
     }
-    catch(err){
-        res.status(500).json({error: "Unable to update driver"});
+    catch (err) {
+        res.status(500).json({ error: "Unable to update ambulance details" });
     }
 }
 
@@ -107,5 +113,5 @@ module.exports={
     getDriverByVehicleNumber,
     insertDriver,
     deleteDriver,
-    updateDriverLocationAndStatus
+    updateDriver
 }
