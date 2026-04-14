@@ -58,22 +58,31 @@ async function navigate(lat1, lon1, lat2, lon2)
         {
             //Open source routing machine API
             const url=`https://router.project-osrm.org/route/v1/driving/${lon1},${lat1};${lon2},${lat2}?overview=false`;
-            const result=await fetch(url);
-            const data=await result.json();
-            if(data.code!=="Ok")
-            {
-                return {
-                    status: false
+            
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+            try {
+                const result = await fetch(url, { signal: controller.signal });
+                const data = await result.json();
+                clearTimeout(timeout);
+
+                if(data.code!=="Ok")
+                {
+                    return { status: false }
                 }
-            }
-            else
-            {
-                const r=data.routes[0];
-                return {
-                    status: true,
-                    distance: (r.distance/1000),
-                    duration: (r.duration/3600)
+                else
+                {
+                    const r=data.routes[0];
+                    return {
+                        status: true,
+                        distance: (r.distance/1000),
+                        duration: (r.duration/3600)
+                    }
                 }
+            } catch (fetchErr) {
+                console.error(`OSRM Fetch Error: ${fetchErr.message}`);
+                return { status: false };
             }
         }              
     }
@@ -86,66 +95,22 @@ async function navigate(lat1, lon1, lat2, lon2)
     
 }
 
-//To verif the lat and lon
-function validate(lat,lon)
-{
-    if(typeof lat!=='number' || typeof lon!=='number')
-        return false;
+// Function to verify if latitude and longitude are within valid Earth ranges
+function validate(lat, lon) {
+    if (typeof lat !== 'number' || typeof lon !== 'number') return false;
 
-    if(lat<-90 || lat>90)
-        return false;
+    // Latitude must be between -90 and 90 degrees
+    if (lat < -90 || lat > 90) return false;
 
-    if(lon<-180 || lon>180)
-        return false;
+    // Longitude must be between -180 and 180 degrees
+    if (lon < -180 || lon > 180) return false;
 
     return true;
 }
 
-// async function search(lat,lon)
-// {
-//     try{
-//         const drivers=await Driver.find({status: "available"});
-//         const results=[];
-//         for(const driver of drivers)
-//         {
-//             const res=await navigate(lat,lon,driver.location.lat,driver.location.lon);
-//             if(res.status)
-//             {
-//                 results.push({
-//                     vehicleNumber: driver.vehicleNumber,
-//                     name: driver.name,
-//                     contact: driver.contact,
-//                     email: driver.email,
-//                     address: driver.address,
-//                     distance: res.distance,
-//                     duration: res.duration
-//                 });
-//             }
-//         }
-        
-//     }
-//     catch(err)
-//     {
-//         throw new Error("Unable to search for drivers");
-//     }       
-// }
-
-
-// //Testing
-// // navigate(14.47744, 75.90188, 14.4774391, 75.9018759)
-// //     .then(res => console.log(res))
-// //     .catch(err => console.error(err));
-// //{ status: true, distance: 0.0004, duration: 0.00002777777777777778 } 
-
-// search(14.46751, 75.92090)
-// .then((res)=>{console.log(res);
-// })
-// .catch(err=>console.log(err));
-
 async function search(lat, lon) {
     try {
         const drivers = await Driver.find({ status: "available" });
-
         let bestDriver = null;
 
         for (const driver of drivers) {
@@ -172,14 +137,13 @@ async function search(lat, lon) {
                 }
             }
         }
-
         return bestDriver;
-
     } catch (err) {
         throw new Error("Unable to search for drivers");
     }
 }
 
-module.exports={
+module.exports = {
+    navigate,
     search
 };

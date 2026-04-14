@@ -15,6 +15,6 @@ router.get('/api/getAllDrivers',admin_api.getAllDrivers);
 router.get('/api/getDriverByVehicleNumber/:vehicleNumber',admin_api.getDriverByVehicleNumber);
 router.post('/api/insertDriver',admin_api.insertDriver);
 router.delete('/api/deleteDriver/:vehicleNumber',admin_api.deleteDriver);
-router.put('/api/updateDriver/:vehicleNumber',admin_api.updateDriverLocationAndStatus);
+router.put('/api/updateDriver/:vehicleNumber',admin_api.updateDriver);
 
 module.exports=router;
