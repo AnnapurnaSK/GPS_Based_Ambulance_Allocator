@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GPS Ambulance Allocator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="site-header">
+        <a class="brand-mark" href="#top">GPS Ambulance Allocator</a>
+        <nav class="site-nav">
+          <a href="#request">Emergency Request</a>
+          <a href="#system">How It Works</a>
+          <a href="/admin">Admin</a>
+        </nav>
+      </header>
+
+      <main id="top">
+        <section class="hero-section">
+          <div class="hero-copy">
+            <p class="eyebrow">Emergency Response Platform</p>
+            <h1>Locate help fast. Dispatch with confidence.</h1>
+            <p class="hero-text">
+              This system combines ambulance discovery, GPS-based matching,
+              driver availability tracking, and an admin control panel in one
+              coordinated workflow.
+            </p>
+
+            <div class="hero-actions">
+              <a class="primary-link" href="/admin">Log In as Admin</a>
+              <a class="secondary-link" href="#request">Call Ambulance</a>
+            </div>
+
+            <div class="hero-stats">
+              <article>
+                <span>Public API</span>
+                <strong>/user/api/request-ambulance</strong>
+              </article>
+              <article>
+                <span>Protected Admin Area</span>
+                <strong>/admin</strong>
+              </article>
+            </div>
+          </div>
+
+          <aside class="hero-panel">
+            <p class="panel-label">Project Snapshot</p>
+            <ul class="signal-list">
+              <li>GPS routing prototype uses OSRM travel duration.</li>
+              <li>Driver allocation is based on available fleet records.</li>
+              <li>Admin operations are protected with JWT auth.</li>
+              <li>Dispatch emails are sent to both patient and driver.</li>
+            </ul>
+          </aside>
+        </section>
+
+        <section id="system" class="insight-section">
+          <article class="insight-card">
+            <p class="panel-label">For Patients</p>
+            <h2>Request an ambulance from a single form.</h2>
+            <p>
+              The public flow accepts your contact details and coordinates,
+              searches for the best available ambulance, and returns the matched
+              driver details when the backend succeeds.
+            </p>
+          </article>
+
+          <article class="insight-card">
+            <p class="panel-label">For Admins</p>
+            <h2>Manage the fleet from the protected dashboard.</h2>
+            <p>
+              Admins can log in, review driver records, add new ambulances,
+              update live status and location, or remove outdated records.
+            </p>
+          </article>
+
+          <article class="insight-card">
+            <p class="panel-label">System Logic</p>
+            <h2>Allocation favors the fastest reachable ambulance.</h2>
+            <p>
+              The current backend inspects available drivers and compares route
+              duration before choosing the best match for the emergency request.
+            </p>
+          </article>
+        </section>
+
+        <section id="request" class="request-section">
+          <div class="request-copy">
+            <p class="eyebrow">Emergency Intake</p>
+            <h2>Call Ambulance</h2>
+            <p>
+              Submit the same fields expected by the existing backend API. You
+              can autofill latitude and longitude from the browser if location
+              access is allowed.
+            </p>
+          </div>
+
+          <form id="ambulanceForm" class="request-form">
+            <label>
+              Backend Base URL
+              <input
+                id="baseUrl"
+                type="url"
+                value="http://127.0.0.1:3000"
+                placeholder="http://127.0.0.1:3000"
+                required
+              />
+            </label>
+
+            <div class="input-grid">
+              <label>
+                Full Name
+                <input id="name" type="text" placeholder="Enter patient name" required />
+              </label>
+
+              <label>
+                Contact Number
+                <input id="contact" type="text" placeholder="Enter contact number" required />
+              </label>
+
+              <label>
+                Email Address
+                <input id="email" type="email" placeholder="Enter email address" required />
+              </label>
+
+              <label>
+                Latitude
+                <input id="lat" type="number" step="any" placeholder="14.46751" required />
+              </label>
+
+              <label>
+                Longitude
+                <input id="lon" type="number" step="any" placeholder="75.92090" required />
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button id="geoButton" class="ghost-button" type="button">
+                Use My Location
+              </button>
+              <button class="primary-button" type="submit">Call Ambulance</button>
+            </div>
+          </form>
+
+          <div class="response-panel">
+            <div class="response-head">
+              <div>
+                <p class="panel-label">Live Response</p>
+                <h3>Dispatch Output</h3>
+              </div>
+              <span id="statusBadge" class="status-badge status-idle">Waiting</span>
+            </div>
+            <p id="responseMeta" class="response-meta">
+              Submit the form to call the existing public ambulance API.
+            </p>
+            <pre id="responseViewer" class="response-viewer">Awaiting request...</pre>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

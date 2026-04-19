@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/admin/styles.css" />
+  </head>
+  <body class="login-body">
+    <div class="login-shell">
+      <section class="login-hero">
+        <p class="eyebrow">GPS-Based Ambulance Allocator</p>
+        <h1>Admin Login</h1>
+        <p class="hero-copy">
+          Sign in with the backend admin credentials to unlock the separate
+          dashboard for driver management.
+        </p>
+
+        <div class="hero-card">
+          <p class="hero-card-label">What happens next</p>
+          <p>
+            Successful login stores the admin token locally and redirects to the
+            dedicated dashboard page for CRUD operations.
+          </p>
+        </div>
+      </section>
+
+      <section class="login-panel">
+        <div class="panel-header">
+          <p class="section-kicker">Secure Entry</p>
+          <h2>Authenticate Admin</h2>
+        </div>
+
+        <form id="loginForm" class="form-grid">
+          <label>
+            Backend Base URL
+            <input
+              id="baseUrl"
+              type="url"
+              placeholder="http://127.0.0.1:3000"
+              value="http://127.0.0.1:3000"
+              required
+            />
+          </label>
+
+          <label>
+            Username
+            <input
+              id="username"
+              type="text"
+              placeholder="Enter admin username"
+              autocomplete="username"
+              required
+            />
+          </label>
+
+          <label>
+            Password
+            <input
+              id="password"
+              type="password"
+              placeholder="Enter admin password"
+              autocomplete="current-password"
+              required
+            />
+          </label>
+
+          <button type="submit" class="primary-button">Login To Dashboard</button>
+        </form>
+
+        <div class="session-strip">
+          <span id="sessionState" class="status-pill status-idle">Signed out</span>
+          <button id="clearSessionButton" class="ghost-button" type="button">
+            Clear Saved Session
+          </button>
+        </div>
+
+        <p id="responseMeta" class="response-meta">Waiting for admin sign-in.</p>
+        <pre id="responseViewer" class="response-viewer compact-viewer">Awaiting login...</pre>
+      </section>
+    </div>
+
+    <script src="/admin/app.js"></script>
+  </body>
+</html>

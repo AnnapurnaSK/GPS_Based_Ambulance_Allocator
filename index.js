@@ -1,5 +1,6 @@
 const express=require('express');
 const mongoose=require('mongoose');
+const path=require('path');
 require('dotenv').config();
 
 //System files
@@ -8,19 +9,17 @@ const admin_routes=require('./backend/routers/admin_routs');
 const driver_routes=require('./backend/routers/driver_routs');
 
 const app=express();
+const homeFrontendDir=path.resolve(__dirname,'frontend/home');
 
 app.use(express.json());
+app.use(express.static(homeFrontendDir));
 
 app.use('/user',user_routs);
 app.use('/admin',admin_routes);
 app.use('/driver',driver_routes);
 
 app.use('/',(req,res)=>{
-    res.json(
-        {
-            "res":"All set"
-        }
-    )
+    res.sendFile(path.join(homeFrontendDir,'index.html'));
 });
 
 mongoose.connect(process.env.MONGO_URL)

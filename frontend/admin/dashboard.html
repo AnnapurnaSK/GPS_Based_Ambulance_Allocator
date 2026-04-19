@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/admin/styles.css" />
+  </head>
+  <body class="dashboard-body">
+    <div class="page-shell">
+      <aside class="hero-panel">
+        <p class="eyebrow">GPS-Based Ambulance Allocator</p>
+        <h1>Admin Dashboard</h1>
+        <p class="hero-copy">
+          Manage driver records through the protected backend admin APIs from a
+          workspace that is separate from login.
+        </p>
+
+        <div class="hero-card">
+          <p class="hero-card-label">Connected backend endpoints</p>
+          <ul class="endpoint-list">
+            <li><code>GET /admin/api/getAllDrivers</code></li>
+            <li><code>GET /admin/api/getDriverByVehicleNumber/:vehicleNumber</code></li>
+            <li><code>POST /admin/api/insertDriver</code></li>
+            <li><code>PUT /admin/api/updateDriver/:vehicleNumber</code></li>
+            <li><code>DELETE /admin/api/deleteDriver/:vehicleNumber</code></li>
+          </ul>
+        </div>
+
+        <div class="hero-card muted-card">
+          <p class="hero-card-label">Backend note</p>
+          <p>
+            <code>getAllUsers()</code> is still not reachable here because its
+            route remains commented out in
+            <code>backend/routers/admin_routs.js</code>.
+          </p>
+        </div>
+      </aside>
+
+      <main class="workspace-panel">
+        <section class="panel dashboard-topbar">
+          <div class="dashboard-topbar-copy">
+            <p class="section-kicker">Authenticated Session</p>
+            <h2 id="dashboardTitle">Admin Workspace</h2>
+          </div>
+          <div class="dashboard-topbar-actions">
+            <span id="sessionState" class="status-pill status-ok">Authenticated</span>
+            <button id="logoutButton" class="ghost-button" type="button">
+              Logout
+            </button>
+          </div>
+        </section>
+
+        <section class="panel actions-panel">
+          <div class="section-heading">
+            <p class="section-kicker">CRUD Operations</p>
+            <h2>Driver Management</h2>
+          </div>
+
+          <div class="card-grid">
+            <section class="action-card">
+              <h3>Fetch All Drivers</h3>
+              <p>Load every driver record available to the authenticated admin.</p>
+              <button id="loadDriversButton" class="secondary-button" type="button">
+                Get All Drivers
+              </button>
+            </section>
+
+            <section class="action-card">
+              <h3>Find Driver</h3>
+              <form id="getDriverForm" class="compact-form">
+                <label>
+                  Vehicle Number
+                  <input
+                    id="searchVehicleNumber"
+                    type="text"
+                    placeholder="e.g. MH12AB1234"
+                    required
+                  />
+                </label>
+                <button type="submit" class="secondary-button">Search Driver</button>
+              </form>
+            </section>
+
+            <section class="action-card">
+              <h3>Insert Driver</h3>
+              <form id="insertDriverForm" class="form-grid compact-grid">
+                <label>
+                  Vehicle Number
+                  <input id="insertVehicleNumber" type="text" required />
+                </label>
+                <label>
+                  Name
+                  <input id="insertName" type="text" required />
+                </label>
+                <label>
+                  Contact
+                  <input id="insertContact" type="text" required />
+                </label>
+                <label>
+                  Email
+                  <input id="insertEmail" type="email" required />
+                </label>
+                <label>
+                  Password
+                  <input id="insertPassword" type="text" required />
+                </label>
+                <label>
+                  Address
+                  <input id="insertAddress" type="text" required />
+                </label>
+                <button type="submit" class="secondary-button">Create Driver</button>
+              </form>
+            </section>
+
+            <section class="action-card">
+              <h3>Update Driver</h3>
+              <form id="updateDriverForm" class="form-grid compact-grid">
+                <label>
+                  Vehicle Number
+                  <input id="updateVehicleNumber" type="text" required />
+                </label>
+                <label>
+                  Latitude
+                  <input id="updateLat" type="number" step="any" required />
+                </label>
+                <label>
+                  Longitude
+                  <input id="updateLon" type="number" step="any" required />
+                </label>
+                <label>
+                  Status
+                  <input
+                    id="updateStatus"
+                    type="text"
+                    placeholder="available / busy"
+                    required
+                  />
+                </label>
+                <button type="submit" class="secondary-button">Update Driver</button>
+              </form>
+            </section>
+
+            <section class="action-card">
+              <h3>Delete Driver</h3>
+              <form id="deleteDriverForm" class="compact-form">
+                <label>
+                  Vehicle Number
+                  <input id="deleteVehicleNumber" type="text" required />
+                </label>
+                <button type="submit" class="danger-button">Delete Driver</button>
+              </form>
+            </section>
+          </div>
+        </section>
+
+        <section class="panel response-panel">
+          <div class="response-header">
+            <div>
+              <p class="section-kicker">Live Output</p>
+              <h2>API Response</h2>
+            </div>
+            <button id="clearResponseButton" class="ghost-button" type="button">
+              Clear Output
+            </button>
+          </div>
+
+          <p id="responseMeta" class="response-meta">
+            Protected API responses will appear here.
+          </p>
+          <pre id="responseViewer" class="response-viewer">Awaiting request...</pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="/admin/app.js"></script>
+  </body>
+</html>
