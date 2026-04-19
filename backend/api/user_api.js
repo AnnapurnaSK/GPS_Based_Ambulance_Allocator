@@ -16,7 +16,7 @@ async function closeRide(req, res) {
             });
         }
 
-        const decoded = jwt.verify(token, "SECRET_KEY");
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const driver = await Driver.findOneAndUpdate(
             { vehicleNumber: decoded.vehicleNumber },

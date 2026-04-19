@@ -1,99 +1,165 @@
-# GPS-Based Ambulance Allocator
+# GPS Based Ambulance Allocator
 
-A full-stack emergency response project focused on assigning the most suitable ambulance using GPS-aware logic, centralized fleet management, and a lightweight request interface.
+GPS Based Ambulance Allocator is a Node.js and MongoDB project that helps assign the most suitable available ambulance to a patient using GPS coordinates. It combines a public emergency request flow, an admin dashboard for fleet management, route-based ambulance selection, and email notifications for both the patient and the assigned driver.
 
-This repository combines:
+The main idea behind the project is simple: in an emergency, the system should not assign an ambulance manually or randomly. It should identify the ambulance that can reach the patient fastest based on its current GPS location and present availability.
 
-- A Node.js + Express backend for ambulance and driver administration
-- A MongoDB data layer for fleet records
-- JWT-protected admin operations
-- A React frontend for ambulance request initiation
-- A GPS routing prototype for nearest-ambulance search
+## Why this project was done
 
-## Overview
+This project addresses a real operational problem in emergency response systems:
 
-The goal of this project is to reduce emergency response time by improving how ambulances are tracked, managed, and allocated. Instead of relying only on manual dispatching, the system is designed to support location-based allocation and live status updates for ambulance availability.
+- Manual ambulance assignment can waste time.
+- The closest ambulance by straight-line distance is not always the fastest one by road.
+- Fleet availability needs to be tracked in one place.
+- Patients and drivers both need immediate confirmation once an ambulance is assigned.
 
-While the complete dispatcher workflow is still evolving, the current codebase already includes the core building blocks needed for a practical emergency allocation system.
+The project was built as a prototype to show how GPS data, routing, backend APIs, and a small admin workflow can work together to reduce dispatch delay and improve coordination.
 
-## Current Capabilities
+## What the project does
+
+The system currently provides these core features:
+
+- Accepts an ambulance request with patient name, contact, email, latitude, and longitude.
+- Looks up all available ambulances stored in MongoDB.
+- Uses OSRM routing to estimate road travel duration from each ambulance to the patient.
+- Selects the best ambulance based on the shortest estimated travel time.
+- Sends email notifications to the patient and the assigned driver.
+- Stores the patient request in the database.
+- Marks the selected ambulance as unavailable until the ride is closed.
+- Provides an admin login and dashboard to add, view, update, search, and delete driver records.
+
+## How the project works
+
+### 1. Public ambulance request
+
+The public-facing interface is served from `frontend/home`. A patient can:
+
+- enter their personal details,
+- allow the browser to capture current GPS location, or
+- manually enter latitude and longitude.
+
+That form sends a `POST` request to:
+
+```text
+/user/api/request-ambulance
+```
+
+Expected payload:
+
+```json
+{
+  "lat": 14.46751,
+  "lon": 75.92090,
+  "name": "Rohan",
+  "contact": "9876543210",
+  "email": "patient@example.com"
+}
+```
+
+### 2. Driver search and allocation
+
+When a request reaches the backend:
+
+1. The server validates that all required request fields are present.
+2. It fetches drivers whose status is `available`.
+3. For each available driver, it calls the OSRM routing service:
+
+```text
+https://router.project-osrm.org/route/v1/driving/{driverLon},{driverLat};{patientLon},{patientLat}?overview=false
+```
+
+4. It compares the returned route durations.
+5. It picks the driver with the lowest estimated travel time.
+
+This means the project does not only use raw distance. It uses road-route duration, which is a better approximation for emergency dispatch.
+
+### 3. Notification flow
+
+After allocation:
+
+- the patient receives an email with ambulance and driver details,
+- the driver receives the patient details and a Google Maps location link,
+- the selected driver is updated in MongoDB so the vehicle is no longer available for a new request.
+
+### 4. Ride closure
+
+The patient email includes a secure close link. When that link is opened:
+
+- the backend verifies a JWT token,
+- the assigned vehicle is found by `vehicleNumber`,
+- the driver status is switched back to available.
+
+Route:
+
+```text
+GET /user/api/close?token=...
+```
+
+### 5. Admin management
+
+Admins use the protected UI in `frontend/admin` to manage the ambulance fleet.
+
+The admin flow includes:
+
+- login using credentials from `.env`,
+- JWT-based access protection,
+- creating new driver records,
+- viewing all drivers,
+- searching a driver by vehicle number,
+- updating driver location and status,
+- deleting old driver records.
+
+Important admin routes:
+
+```text
+POST   /admin/api/login
+GET    /admin/api/getAllDrivers
+GET    /admin/api/getDriverByVehicleNumber/:vehicleNumber
+POST   /admin/api/insertDriver
+PUT    /admin/api/updateDriver/:vehicleNumber
+DELETE /admin/api/deleteDriver/:vehicleNumber
+```
+
+## Architecture overview
 
 ### Backend
 
-- Admin login with JWT token generation
-- Protected admin APIs for ambulance/driver management
-- Create, read, update, and delete driver records
-- Driver status tracking (`available`, `dispatched`, `maintenance`)
-- Driver location updates using latitude and longitude coordinates
-- MongoDB persistence using Mongoose
+- `index.js`
+  Main Express server. Serves the public frontend and mounts user, admin, and driver routes.
+- `backend/api/user_api.js`
+  Handles ambulance requests and ride closure.
+- `backend/api/admin_api.js`
+  Handles driver CRUD operations.
+- `backend/controllers/gps.js`
+  Finds the best available ambulance using route duration from OSRM.
+- `backend/controllers/mail.js`
+  Sends email notifications and updates driver status after allocation.
+- `backend/middleware/admin_auth.js`
+  Handles admin login and token verification.
+- `backend/models/drivers.js`
+  MongoDB schema for ambulance/driver records.
+- `backend/models/users.js`
+  MongoDB schema for patient request records.
 
 ### Frontend
 
-- Simple emergency request form
-- Browser geolocation capture
-- Request initiation flow for ambulance search
+- `frontend/home`
+  Public emergency request page.
+- `frontend/admin`
+  Admin login page and admin dashboard.
 
-### GPS Logic Prototype
+### Database
 
-- Coordinate validation
-- Travel distance and duration lookup using OSRM
-- Nearest-point selection based on routing duration
+MongoDB stores:
 
-## Tech Stack
+- driver records,
+- ambulance status,
+- current ambulance coordinates,
+- patient request history.
 
-- **Frontend:** React
-- **Backend:** Node.js, Express
-- **Database:** MongoDB with Mongoose
-- **Authentication:** JSON Web Token (JWT)
-- **Environment Management:** dotenv
-- **Routing Engine Prototype:** OSRM public routing service
+## Driver data model
 
-## Project Structure
-
-```text
-GPS_Based_Ambulance_Allocator/
-├── backend/
-│   ├── api/
-│   ├── controllers/
-│   ├── middleware/
-│   ├── models/
-│   └── routers/
-├── frontend/
-│   ├── public/
-│   └── src/
-├── index.js
-├── package.json
-└── README.md
-```
-
-## Implemented API Endpoints
-
-Base URL examples below assume the backend runs locally on `http://localhost:3000`.
-
-### Public
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Health/default response |
-| `POST` | `/admin/api/login` | Authenticate admin and receive JWT |
-| `GET` | `/user/` | User default route |
-| `GET` | `/driver/` | Driver default route |
-
-### Admin-Protected
-
-Include the admin JWT in the `Authorization` header.
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/admin/api/getAllDrivers` | Fetch all drivers/ambulances |
-| `GET` | `/admin/api/getDriverByVehicleNumber/:vehicleNumber` | Fetch a specific driver |
-| `POST` | `/admin/api/insertDriver` | Add a new driver/ambulance record |
-| `PUT` | `/admin/api/updateDriver/:vehicleNumber` | Update location and status |
-| `DELETE` | `/admin/api/deleteDriver/:vehicleNumber` | Remove a driver record |
-
-## Driver Data Model
-
-The current backend stores each ambulance/driver entry with fields similar to:
+Each ambulance/driver entry includes:
 
 - `vehicleNumber`
 - `name`
@@ -104,113 +170,157 @@ The current backend stores each ambulance/driver entry with fields similar to:
 - `location.lat`
 - `location.lon`
 - `address`
-- `assigned_to.lat`
-- `assigned_to.lon`
 
-## Getting Started
+The `status` field is used during allocation to determine whether an ambulance can be assigned.
+
+## Project flow in one view
+
+```text
+Patient submits request
+        ->
+Backend reads patient location
+        ->
+Fetch all available drivers from MongoDB
+        ->
+Get route duration for each driver using OSRM
+        ->
+Choose fastest reachable ambulance
+        ->
+Send email to patient and driver
+        ->
+Store request in MongoDB
+        ->
+Mark driver unavailable
+        ->
+Close ride later using secure token link
+        ->
+Mark driver available again
+```
+
+## Tech stack
+
+- Node.js
+- Express
+- MongoDB with Mongoose
+- JWT authentication
+- Nodemailer
+- OSRM routing service
+- HTML, CSS, and vanilla JavaScript
+
+## Setup and run
 
 ### Prerequisites
 
-- Node.js
-- npm
-- MongoDB instance or MongoDB Atlas connection string
+- Node.js 18 or later
+- MongoDB database
+- Gmail account or another mail account configured for Nodemailer
 
-### 1. Clone the Repository
+### Environment variables
 
-```bash
-git clone <your-repository-url>
-cd GPS_Based_Ambulance_Allocator
+The project expects these variables in `.env`:
+
+```env
+PORT=
+MONGO_URL=
+JWT_SECRET=
+ADMIN_USERNAME=
+ADMIN_PASSWORD=
+EMAIL=
+PASSWORD=
 ```
 
-### 2. Install Backend Dependencies
+Notes:
+
+- `EMAIL` and `PASSWORD` are used by Nodemailer.
+- `ADMIN_USERNAME` and `ADMIN_PASSWORD` protect the admin login.
+- `JWT_SECRET` is used for admin authentication and ride-closing links.
+
+### Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-PORT=3000
-MONGO_URL=your_mongodb_connection_string
-JWT_SECRET=your_jwt_secret
-ADMIN_USERNAME=your_admin_username
-ADMIN_PASSWORD=your_admin_password
-```
-
-### 4. Start the Backend
+### Start the main application
 
 ```bash
 node index.js
 ```
 
-The Express API will start after a successful MongoDB connection.
+The backend and public frontend will be available at:
 
-### 5. Install Frontend Dependencies
+```text
+http://127.0.0.1:3000
+```
+
+### Optional: run the separate admin frontend server
+
+There is also a separate server inside `frontend/admin/server.js`.
+
+Run it with:
 
 ```bash
-cd frontend
-npm install
+npm run admin-frontend
 ```
 
-### 6. Start the Frontend
+That starts the admin frontend on:
 
-```bash
-npm start
+```text
+http://127.0.0.1:4100
 ```
 
-The frontend development server will typically run on `http://localhost:3000` unless the port is already in use.
+In the current codebase, the admin UI can also be accessed directly from the main app at:
 
-## Example Admin Login Request
-
-```http
-POST /admin/api/login
-Content-Type: application/json
-
-{
-  "username": "admin",
-  "password": "admin-password"
-}
+```text
+http://127.0.0.1:3000/admin
 ```
 
-## Example Driver Insert Payload
+## How to use the project
+
+### Patient side
+
+1. Open the home page.
+2. Enter patient details.
+3. Capture current location or enter coordinates manually.
+4. Submit the request.
+5. If a driver is available, the system returns the assigned ambulance details and sends email notifications.
+
+### Admin side
+
+1. Open `/admin`.
+2. Log in using admin credentials from `.env`.
+3. Add ambulance records before testing allocation.
+4. Update each driver with current GPS coordinates and status.
+5. Use the dashboard to monitor and manage the fleet.
+
+## Example successful response
 
 ```json
 {
-  "vehicleNumber": "KA-01-AB-1234",
-  "name": "Driver One",
-  "contact": "9876543210",
-  "email": "driver@example.com",
-  "password": "secure-password",
-  "address": "City Hospital Garage"
+  "status": true,
+  "message": "Ambulance allocated successfully",
+  "driver": {
+    "vehicleNumber": "KA17IJ5555",
+    "name": "Arun M",
+    "contact": "9456789012",
+    "email": "driver@example.com",
+    "address": "Vidyanagar, Davangere",
+    "distance": 0.4262,
+    "duration": 0.0091
+  }
 }
 ```
 
-## Development Status
+## Future improvements
 
-This project is currently best described as a functional prototype with core backend operations in place. The repository already demonstrates:
+- Real-time ambulance GPS tracking from driver devices
+- Better dashboard analytics and live fleet map
+- Hospital-side integration
+- SMS/WhatsApp alerts in addition to email
+- Password hashing and stronger security controls
+- Better driver and trip lifecycle states
+- Automated tests for APIs and allocation logic
 
-- Secure admin access
-- Fleet record management
-- GPS-based routing experimentation
-- A basic patient-side request interface
+## Summary
 
-Areas that can be expanded next include:
-
-- Connecting the frontend request flow to backend allocation APIs
-- Persisting live ambulance assignment workflows
-- Adding driver authentication and driver-facing actions
-- Integrating real-time tracking with sockets or polling
-- Improving validation, error handling, and automated tests
-- Hardening security for production deployment
-
-## Presentation Notes
-
-This project is well-suited for:
-
-- Final-year engineering presentations
-- healthcare logistics demos
-- smart city or emergency response prototypes
-- system design and full-stack portfolio showcases
+GPS Based Ambulance Allocator is a prototype emergency dispatch system that demonstrates how ambulance assignment can be improved with GPS coordinates, route-based travel estimation, and centralized fleet management. The project was done to reduce response delay, automate ambulance selection, and show a practical way to connect patients, drivers, and administrators in one workflow.

@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
 const {search}=require('./gps');
+require('dotenv').config();
 
 const Driver=require('../models/drivers');
 

@@ -38,49 +38,88 @@ function requestCurrentPosition(options) {
   });
 }
 
-async function getBestAvailablePosition() {
-  const attempts = [
-    {
-      enableHighAccuracy: true,
-      timeout: 15000,
-      maximumAge: 0,
-    },
-    {
-      enableHighAccuracy: true,
-      timeout: 20000,
-      maximumAge: 0,
-    },
-  ];
-
-  let bestPosition = null;
-  let lastError = null;
-
-  for (const options of attempts) {
-    try {
-      const position = await requestCurrentPosition(options);
-      if (
-        !bestPosition ||
-        position.coords.accuracy < bestPosition.coords.accuracy
-      ) {
-        bestPosition = position;
-      }
-
-      if (position.coords.accuracy <= 100) {
-        return position;
-      }
-    } catch (error) {
-      lastError = error;
-    }
+function normalizeGeolocationError(error) {
+  if (!error) {
+    return "Unable to retrieve your location.";
   }
 
-  if (bestPosition) {
-    return bestPosition;
+  switch (error.code) {
+    case error.PERMISSION_DENIED:
+      return "Location permission was denied. Please allow location access and try again.";
+    case error.POSITION_UNAVAILABLE:
+      return "Your device could not determine a GPS position.";
+    case error.TIMEOUT:
+      return "Location request timed out. Please retry in an open area or with GPS enabled.";
+    default:
+      return error.message || "Unable to retrieve your location.";
   }
-
-  throw lastError || new Error("Unable to retrieve your location.");
 }
 
-elements.geoButton.addEventListener("click", async () => {
+function updateLocationInputs(position) {
+  elements.lat.value = position.coords.latitude.toFixed(6);
+  elements.lon.value = position.coords.longitude.toFixed(6);
+}
+
+function watchForBestPosition() {
+  return new Promise((resolve, reject) => {
+    let bestPosition = null;
+    let settled = false;
+
+    const stopWatcher = (watchId) => {
+      if (watchId !== null) {
+        navigator.geolocation.clearWatch(watchId);
+      }
+    };
+
+    const finalize = (watchId, position, error) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+      stopWatcher(watchId);
+
+      if (position) {
+        resolve(position);
+        return;
+      }
+
+      reject(error || new Error("Unable to retrieve your location."));
+    };
+
+    const timeoutId = window.setTimeout(() => {
+      finalize(watchId, bestPosition, bestPosition ? null : new Error("Unable to retrieve your location."));
+    }, 12000);
+
+    const watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        if (
+          !bestPosition ||
+          position.coords.accuracy < bestPosition.coords.accuracy
+        ) {
+          bestPosition = position;
+          updateLocationInputs(position);
+        }
+
+        if (position.coords.accuracy <= 100) {
+          window.clearTimeout(timeoutId);
+          finalize(watchId, position, null);
+        }
+      },
+      (error) => {
+        window.clearTimeout(timeoutId);
+        finalize(watchId, bestPosition, error);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0,
+      }
+    );
+  });
+}
+
+async function detectLocation() {
   if (!navigator.geolocation) {
     setStatus("Geolocation unavailable", "status-error");
     renderResponse("Location unavailable", {
@@ -90,11 +129,22 @@ elements.geoButton.addEventListener("click", async () => {
   }
 
   setStatus("Detecting location", "status-working");
+  renderResponse("Detecting location", {
+    message: "Trying to acquire a fresh GPS fix from your browser.",
+  });
 
   try {
-    const position = await getBestAvailablePosition();
-    elements.lat.value = position.coords.latitude.toFixed(6);
-    elements.lon.value = position.coords.longitude.toFixed(6);
+    let position = await requestCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 12000,
+      maximumAge: 0,
+    });
+
+    if ((position.coords.accuracy || Number.POSITIVE_INFINITY) > 100) {
+      position = await watchForBestPosition();
+    }
+
+    updateLocationInputs(position);
 
     const accuracy = Math.round(position.coords.accuracy || 0);
     const accuracyState = accuracy > 1000 ? "status-error" : "status-success";
@@ -114,9 +164,15 @@ elements.geoButton.addEventListener("click", async () => {
   } catch (error) {
     setStatus("Location blocked", "status-error");
     renderResponse("Location failed", {
-      error: error.message || "Unable to retrieve your location.",
+      error: normalizeGeolocationError(error),
     });
   }
+}
+
+elements.geoButton.addEventListener("click", detectLocation);
+
+window.addEventListener("load", () => {
+  window.setTimeout(detectLocation, 600);
 });
 
 elements.form.addEventListener("submit", async (event) => {
