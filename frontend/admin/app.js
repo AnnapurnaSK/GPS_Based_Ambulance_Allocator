@@ -201,6 +201,7 @@ function initDashboardPage() {
     clearResponseButton: document.getElementById("clearResponseButton"),
     responseMeta: document.getElementById("responseMeta"),
     responseViewer: document.getElementById("responseViewer"),
+    loadUsersButton: document.getElementById("loadUsersButton"),
   };
 
   const username = getStoredUsername();
@@ -342,6 +343,18 @@ function initDashboardPage() {
       });
     }
   });
+
+    elements.loadUsersButton.addEventListener("click", async () => {
+      try {
+        const data = await callApi("/admin/api/getAllUsers");
+        renderResponse(elements.responseMeta, elements.responseViewer, "Fetched all users", data);
+      } catch (error) {
+        setSessionState(elements.sessionState, "Request failed", "status-error");
+        renderResponse(elements.responseMeta, elements.responseViewer, "Get all users failed", {
+          error: error.message,
+        });
+      }
+    });
 
   elements.clearResponseButton.addEventListener("click", () => {
     renderResponse(elements.responseMeta, elements.responseViewer, "Responses cleared", {

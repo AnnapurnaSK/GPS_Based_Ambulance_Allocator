@@ -23,7 +23,7 @@ async function allocateandSendMail(lat, lon, patient) {
         { expiresIn: "2h" }
         );
 
-    const closeLink = `${baseURL}/user/api/close?token=${token}`;
+    const closeLink = `${baseURL}/user/api/close?token=${token}&email=${patient.email}`;
 
         const transporter = nodemailer.createTransport({
             service: 'gmail',

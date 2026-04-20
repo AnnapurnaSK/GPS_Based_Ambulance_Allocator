@@ -7,12 +7,12 @@ const jwt = require('jsonwebtoken');
 
 async function closeRide(req, res) {
     try {
-        const { token } = req.query;
+        const { token,email } = req.query;
 
-        if (!token) {
+        if (!token || !email) {
             return res.status(400).json({
                 status: false,
-                message: "Token missing"
+                message: "Token or email missing"
             });
         }
 
@@ -21,7 +21,13 @@ async function closeRide(req, res) {
         const driver = await Driver.findOneAndUpdate(
             { vehicleNumber: decoded.vehicleNumber },
             { status: "available" },
-            { new: true }
+            { returnDocument: 'after' }
+        );
+
+        const user = await User.findOneAndUpdate(
+            { email: email },
+            { status: "closed" },
+            { returnDocument: 'after' }
         );
 
         if (!driver) {
@@ -30,6 +36,14 @@ async function closeRide(req, res) {
                 message: "Driver not found"
             });
         }
+
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found"
+            });
+        }
+
 
 
 
@@ -41,7 +55,7 @@ async function closeRide(req, res) {
     } catch (err) {
         return res.status(401).json({
             status: false,
-            message: "Invalid or expired token"
+            message: " Something went wrong"
         });
     }
 }

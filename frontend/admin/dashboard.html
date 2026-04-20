@@ -30,17 +30,10 @@
             <li><code>POST /admin/api/insertDriver</code></li>
             <li><code>PUT /admin/api/updateDriver/:vehicleNumber</code></li>
             <li><code>DELETE /admin/api/deleteDriver/:vehicleNumber</code></li>
+            <li><code>GET /admin/api/getAllUsers</code></li>
           </ul>
         </div>
 
-        <div class="hero-card muted-card">
-          <p class="hero-card-label">Backend note</p>
-          <p>
-            <code>getAllUsers()</code> is still not reachable here because its
-            route remains commented out in
-            <code>backend/routers/admin_routs.js</code>.
-          </p>
-        </div>
       </aside>
 
       <main class="workspace-panel">
@@ -159,6 +152,15 @@
             </section>
           </div>
         </section>
+
+        <section class="action-card">
+      <h3>Track All Users</h3>
+        <p>Load every user/patient record available to the authenticated admin.</p>
+          <button id="loadUsersButton" class="secondary-button" type="button">
+            Get All Users
+          </button>
+      </section>
+
 
         <section class="panel response-panel">
           <div class="response-header">

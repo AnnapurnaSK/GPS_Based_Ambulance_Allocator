@@ -6,7 +6,8 @@ const userSchema = new mongoose.Schema({
     email: { type: String, required: true },
     latitude: { type: Number, default: 0 },
     longitude: { type: Number, default: 0 },
-    vehicleNumber: { type: String, default: "" }
+    vehicleNumber: { type: String, default: "" },
+    status: { type: String, default: "pending" }
 }, { timestamps: true });
 
 const User = mongoose.model('User', userSchema, 'users');

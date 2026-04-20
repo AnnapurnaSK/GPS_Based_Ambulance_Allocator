@@ -73,6 +73,18 @@ async function insertDriver(req,res)
     }
 }   
 
+//To get all user requests
+async function getAllUserRequests(req,res)
+{
+    try{
+        const result=await User.find({});
+        res.json(result);
+    }
+    catch(err){
+        res.status(500).json({error: "Unable to fetch user requests"});
+    }
+}
+
 //To get all drivers
 async function getAllDrivers(req,res)
 {
@@ -107,5 +119,6 @@ module.exports={
     getDriverByVehicleNumber,
     insertDriver,
     deleteDriver,
-    updateDriverLocationAndStatus
+    updateDriverLocationAndStatus,
+    getAllUserRequests
 }
