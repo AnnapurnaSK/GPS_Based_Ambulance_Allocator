@@ -1,3 +1,9 @@
+Link to live website hosted on render web services may take few seconds to load on first visit
+Link: https://health-qxur.onrender.com/
+
+Link to screen recording of working prototype:
+https://drive.google.com/drive/folders/1Yf8HFu0NeaXIsD_qRFJY3gUOgGItH3lo
+
 # GPS Based Ambulance Allocator
 
 GPS Based Ambulance Allocator is a Node.js and MongoDB project that helps assign the most suitable available ambulance to a patient using GPS coordinates. It combines a public emergency request flow, an admin dashboard for fleet management, route-based ambulance selection, and email notifications for both the patient and the assigned driver.
