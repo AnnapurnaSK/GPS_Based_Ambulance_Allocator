@@ -21,7 +21,7 @@ async function closeRide(req, res) {
         const driver = await Driver.findOneAndUpdate(
             { vehicleNumber: decoded.vehicleNumber },
             { status: "available" },
-            { returnDocument: 'after' }
+            { new: true }
         );
 
         const user = await User.findOneAndUpdate(
@@ -45,19 +45,105 @@ async function closeRide(req, res) {
         }
 
 
-
-
-        return res.status(200).json({
-            status: true,
-            message: "Ride closed successfully"
-        });
+                // ✅ SUCCESS PAGE
+        return res.send(`
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8" />
+          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+          <title>Close Ride</title>
+          <style>
+            body {
+              min-height:100vh;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              background:#f5f5f5;
+              font-family:sans-serif;
+            }
+            .box {
+              text-align:center;
+              max-width:340px;
+              width:100%;
+              background:#fff;
+              border:1px solid #e0e0e0;
+              border-radius:16px;
+              padding:2.5rem 2rem;
+            }
+            .icon {
+              font-size:40px;
+              color:#3b6d11;
+              margin-bottom:1rem;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="box">
+            <div class="icon">✔</div>
+            <h2>Ride closed successfully</h2>
+            <p>Driver is now available</p>
+          </div>
+        </body>
+        </html>
+        `);
 
     } catch (err) {
-        return res.status(401).json({
-            status: false,
-            message: " Something went wrong"
-        });
+        return sendErrorPage(res, "Something went wrong");
     }
+
+
+    //     return res.status(200).json({
+    //         status: true,
+    //         message: "Ride closed successfully"
+    //     });
+
+    // } catch (err) {
+    //     return res.status(401).json({
+    //         status: false,
+    //         message: " Something went wrong"
+    //     });
+    // }
+}
+
+
+function sendErrorPage(res, message) {
+    return res.status(500).send(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Error</title>
+      <style>
+        body {
+          display:flex;
+          justify-content:center;
+          align-items:center;
+          height:100vh;
+          background:#f5f5f5;
+          font-family:sans-serif;
+        }
+        .box {
+          text-align:center;
+          background:#fff;
+          padding:2rem;
+          border-radius:12px;
+        }
+        .icon {
+          font-size:40px;
+          color:#a32d2d;
+          margin-bottom:1rem;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="box">
+        <div class="icon">✖</div>
+        <h2>${message}</h2>
+        <p>Please try again</p>
+      </div>
+    </body>
+    </html>
+    `);
 }
 
 async function requestAmbulance(req, res) {
